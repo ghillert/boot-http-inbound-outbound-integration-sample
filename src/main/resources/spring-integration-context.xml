@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:int-http="http://www.springframework.org/schema/integration/http"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<bean id="serviceActivator" class="demo.ServiceActivator"/>
+
+	<int:gateway default-request-channel="input" default-reply-channel="send-reply-channel"
+		service-interface="demo.WeatherInterface"/>
+
+	<int-http:inbound-gateway
+		id="clientRequest"
+		request-channel="input"
+		reply-channel="send-reply-channel" path="/weather-inbound/{query}"
+		payload-expression="#pathVariables.query">
+	</int-http:inbound-gateway>
+
+	<int:channel id="input">
+		<int:interceptors>
+			<int:wire-tap channel="loggit"/>
+		</int:interceptors>
+	</int:channel>
+
+	<int-http:outbound-gateway id="getWeatherInfo"
+		request-channel="input"
+		reply-channel="process-channel"
+		http-method="GET"
+		expected-response-type="java.lang.String"
+		url="http://api.openweathermap.org/data/2.5/weather?q={query}">
+		<int-http:uri-variable name="query" expression="payload"/>
+	</int-http:outbound-gateway>
+
+	<int:channel id="process-channel"/>
+
+	<int:service-activator id="processWeatherData"
+		ref="serviceActivator" method="processPayload"
+		input-channel="process-channel"
+		output-channel="send-reply-channel" >
+	</int:service-activator>
+
+	<int:logging-channel-adapter id="loggit" log-full-message="false"/>
+
+	<int:channel id="send-reply-channel">
+		<int:interceptors>
+			<int:wire-tap channel="loggit"/>
+		</int:interceptors>
+	</int:channel>
+</beans>

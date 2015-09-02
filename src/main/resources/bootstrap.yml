@@ -1,0 +1,4 @@
+spring:
+  application:
+    name: http-inbound-outbound-integration-sample
+debug: true
