@@ -17,7 +17,10 @@ package demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.integration.support.MessageBuilder;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
@@ -34,7 +37,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class HttpIntegrationApplication {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(HttpIntegrationApplication.class);
+		ConfigurableApplicationContext  ctx = SpringApplication.run(HttpIntegrationApplication.class);
+		Thread.sleep(2000);
+		MessageChannel channel = ctx.getBean("input", MessageChannel.class);
+		channel.send(MessageBuilder.withPayload("{\"userId\": \"invalid@mail.com\",\"password\": \"wrongpassword\"}").build());
 	}
 
 }
